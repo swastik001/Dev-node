@@ -1,5 +1,6 @@
 const { mongoose } = require("mongoose");
 const { Schema } = mongoose;
+const validator = require("validator");
 const userSchema = new Schema(
   {
     firstName: {
@@ -17,10 +18,20 @@ const userSchema = new Schema(
       unique: true, //this will make sure that no two users can have the same emailId, if we try to save a user with an emailId that already exists, it will throw an error
       lowercase: true, //this will make sure that the emailId is always stored in lowercase,
       trim: true, //this will make sure that there are no spaces before or after the emailId,
+      validate(value) {
+        if (!validator.isEmail(value)) {
+          throw new Error("Invalid email address - " + value);
+        }
+      },
     },
     password: {
       type: String,
       required: true,
+      validate(value) {
+        if (!validator.isStrongPassword(value)) {
+          throw new Error("Enter a strong Password - " + value);
+        }
+      },
     },
     age: {
       type: Number,
@@ -37,6 +48,11 @@ const userSchema = new Schema(
 
     photoUrl: {
       type: String,
+      validate(value) {
+        if (!validator.isURL(value)) {
+          throw new Error("Invalid profile Url - " + value);
+        }
+      },
       default:
         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrs6Y-6VAaqH0AIqss-FEL6zHbOnETo9E_Ulrn05C0DA&s=10", //default image URL if user does not provide photoUrl
     },

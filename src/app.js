@@ -1,26 +1,44 @@
 const express = require("express");
 const connectDB = require("./config/database");
+const app = express();
+const bcrypt = require("bcrypt");
+
 const User = require("./models/user");
 const { isAuth } = require("./middleware/adminAuth");
-const app = express();
+const { validateSignUp } = require("./utils/validation");
 
 app.use(express.json()); //this is a middleware, it will parse the incoming request body to json, so that we can access it in req.body. This is a built-in middleware in express. Now as we know   app.use will be executed for every incoming request, this is same like app.use((req, res, next) => {})
 
 //post
 app.post("/signup", async (req, res) => {
-  const user = new User(req.body);
+  // const user = new User(req.body);
+  const { firstName, lastName, emailId, password, age, gender } = req?.body;
+
+  //valide signup feilds
+  validateSignUp(req);
+
+  //encrypt the password
+  const passwordHash = await bcrypt.hash(password, 10); // it takes 2 arguments, first is the password to be hashed, second is the salt rounds, which is the number of times the password will be hashed
+  console.log("passwordHash", passwordHash);
+  const user = new User({
+    firstName,
+    lastName,
+    emailId,
+    password: passwordHash,
+    age,
+    gender,
+  });
   try {
     await user.save();
   } catch (e) {
-    console.log("eeeeeeee", e.message);
-    res.status(400).send("something went wrong", +e.message);
+    res.status(400).send("Sign Up Failed", +e.message);
   }
   res.send("User signed up successfully");
 });
 
 //get user by emailID
 app.get("/user", async (req, res) => {
-  const userEmail = req.body.emailId;
+  const userEmail = req.body?.emailId;
   try {
     const users = await User.find({ emailId: userEmail });
     // FIND RETURNS ARRAY
@@ -31,6 +49,26 @@ app.get("/user", async (req, res) => {
     }
   } catch (e) {
     res.status(400).send("Something went wrong" + e.message);
+  }
+});
+
+//Login User
+app.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req?.body;
+    const user = await User.findOne({ emailId: emailId });
+    // console.log("ooo", user);
+    if (!user) {
+      throw new Error("Invalid Credentials, user not found");
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (isPasswordValid) {
+      res.send("Login Successful");
+    } else {
+      throw new Error("Invalid Credentials");
+    }
+  } catch (e) {
+    res.send(" Login Failed - " + e.message);
   }
 });
 
@@ -76,7 +114,6 @@ app.patch("/user/:userId", async (req, res) => {
     const isUpdateAloowed = Object.keys(data).every((k) =>
       ALLOWED_UPDATES.includes(k),
     );
-    console.log(isUpdateAloowed, data.skills.length);
     if (!isUpdateAloowed) {
       throw new Error("Update not allowed");
     }
