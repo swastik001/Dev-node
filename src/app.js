@@ -8,13 +8,12 @@ app.use(express.json()); //this is a middleware, it will parse the incoming requ
 
 //post
 app.post("/signup", async (req, res) => {
-  // console.log(req.body);
-
   const user = new User(req.body);
   try {
     await user.save();
   } catch (e) {
-    res.status(400).send("something went wrong");
+    console.log("eeeeeeee", e.message);
+    res.status(400).send("something went wrong", +e.message);
   }
   res.send("User signed up successfully");
 });
@@ -31,7 +30,7 @@ app.get("/user", async (req, res) => {
       res.send(users);
     }
   } catch (e) {
-    res.status(400).send("Something went wrong");
+    res.status(400).send("Something went wrong" + e.message);
   }
 });
 
@@ -65,23 +64,25 @@ app.patch("/user", async (req, res) => {
   try {
     await User.findByIdAndUpdate({ _id: id }, data, {
       returnDocument: "before",
+      runValidators: true,
     }); // we passed whole data object, so it will update all the fields in the data object, but it will ignore the fields which are not present in the data object, so it will not delete any field, it will only update the fields which are present in the data object.
     //returnDocument: "before" will return the document before update, if we want to return the document after update, we can use returnDocument: "after". default is "before"
+    //  runValidators: true, this will make sure that the validators are run on the updated data,
 
     res.send("User Updated");
   } catch (e) {
-    res.send("Something went wrong, Again!");
+    res.send("Something went wrong, Again!" + e.message);
   }
 });
 
 connectDB()
-  .then(() => {
+  .then(async () => {
     // first connect to db, then start (listening ) to server
     console.log("Cluster connection established");
     app.listen(7777, () => {
       console.log("server is up");
     });
   })
-  .catch(() => {
-    console.log("Cluster cannot be connected");
+  .catch((e) => {
+    console.log("Cluster cannot be connected", e.message);
   });
