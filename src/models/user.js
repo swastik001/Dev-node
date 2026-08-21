@@ -1,4 +1,6 @@
 const { mongoose } = require("mongoose");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 const { Schema } = mongoose;
 const validator = require("validator");
 const userSchema = new Schema(
@@ -71,6 +73,23 @@ const userSchema = new Schema(
 
 //this is how you create a model, first argument is name second is Schema.
 //also U in caps in user, nomenclature for telling its a mongoose-model
+
+//schema Methods- these are the methods that we can use on the user model, like we can use user.getJWT() to get the JWT token for the user, or user.validatePassword() to validate the password of the user, these methods are defined in the schema, and we can use them on the user model.
+
+userSchema.methods.getJWT = async function () {
+  const user = this;
+  const jwtToken = await jwt.sign({ _id: user._id }, "SECRETOKENKEY", {
+    expiresIn: "1d",
+  });
+  return jwtToken;
+};
+userSchema.methods.validatePassword = async function (inputPassword) {
+  const user = this;
+  const savedPassword = user.password;
+  const isPasswordValid = await bcrypt.compare(inputPassword, savedPassword);
+  return isPasswordValid;
+};
+
 const User = mongoose.model("user", userSchema);
 
 module.exports = User;

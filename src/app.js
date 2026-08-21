@@ -2,12 +2,15 @@ const express = require("express");
 const connectDB = require("./config/database");
 const app = express();
 const bcrypt = require("bcrypt");
-
+var cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 const User = require("./models/user");
-const { isAuth } = require("./middleware/adminAuth");
+
+const { isAuth, userAuth } = require("./middleware/auth");
 const { validateSignUp } = require("./utils/validation");
 
 app.use(express.json()); //this is a middleware, it will parse the incoming request body to json, so that we can access it in req.body. This is a built-in middleware in express. Now as we know   app.use will be executed for every incoming request, this is same like app.use((req, res, next) => {})
+app.use(cookieParser()); //this is a middleware, it will parse the incoming request cookies to json, so that we can access it in req.cookies.   app.use will be executed for every incoming request, this is same like app.use((req, res, next) => {})
 
 //post
 app.post("/signup", async (req, res) => {
@@ -19,7 +22,7 @@ app.post("/signup", async (req, res) => {
 
   //encrypt the password
   const passwordHash = await bcrypt.hash(password, 10); // it takes 2 arguments, first is the password to be hashed, second is the salt rounds, which is the number of times the password will be hashed
-  console.log("passwordHash", passwordHash);
+
   const user = new User({
     firstName,
     lastName,
@@ -61,14 +64,52 @@ app.post("/login", async (req, res) => {
     if (!user) {
       throw new Error("Invalid Credentials, user not found");
     }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    // const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await user.validatePassword(password);
+
     if (isPasswordValid) {
+      //JWT token generation
+      // const jwtToken = await jwt.sign({ _id: user._id }, "SECRETOKENKEY", {
+      //   expiresIn: "1d",
+      // }); //it takes 3 arguments, first is the payload, second is the secret key, third is the options, we can set the expiration time in options, but we are not setting it here, so it will be valid forever
+
+      const jwtToken = await user.getJWT();
+
+      //set cookie in response and send the response
+      res.cookie("token", jwtToken);
+
       res.send("Login Successful");
     } else {
       throw new Error("Invalid Credentials");
     }
   } catch (e) {
     res.send(" Login Failed - " + e.message);
+  }
+});
+
+//get profile
+app.get("/profile", userAuth, async (req, res) => {
+  try {
+    // //get the token from cookie,
+    // const cookie = req.cookies;
+
+    // //token
+    // const { token } = cookie;
+    // if (!token) {
+    //   throw new Error("Token not found");
+    // }
+
+    // //validate the token,
+    // const decodedMessage = await jwt.verify(token, "SECRETOKENKEY");
+    // const { _id } = decodedMessage;
+    // const user = await User.findOne({ _id: _id });
+    // if (!user) {
+    //   throw new Error("User not found");
+    // }
+    const user = req.user;
+    res.send(user);
+  } catch (e) {
+    res.status(400).send("Something went wrong, Again!" + e.message);
   }
 });
 
@@ -131,6 +172,12 @@ app.patch("/user/:userId", async (req, res) => {
   } catch (e) {
     res.send("Something went wrong, Again!" + e.message);
   }
+});
+
+app.post("/sendConnectionRequest", userAuth, (req, res) => {
+  const user = req.user;
+
+  res.send(user.firstName + " Sent Connection Request");
 });
 
 connectDB()
