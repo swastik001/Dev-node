@@ -12,6 +12,7 @@ const connectionRequestSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     required: true,
     // index: true, //this will make touserId indexed and make queries faster
+    ref: "User",
   },
   status: {
     type: String,

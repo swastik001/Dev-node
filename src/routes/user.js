@@ -47,9 +47,18 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
           { toUserId: loggedInUser._id, status: "accepted" },
         ],
       })
-      .populate("fromUserId", USER_SAFE_DATA); //but we dont need to populate toUserId because we are only interested in the users who sent the request to the logged in user, and not the users who received the request from the logged in user.
+      .populate("fromUserId", USER_SAFE_DATA)
+      .populate("toUserId", USER_SAFE_DATA); //but we dont need to populate toUserId/FROMUSERID because we are only interested in the users who sent the request to the logged in user, and not the users who received the request from the logged in user.
 
-    const data = connections.map((connection) => connection.fromUserId);
+    const data = connections.map((connection) => {
+      if (
+        connection.fromUserId._id.toString() === loggedInUser._id.toString()
+      ) {
+        return connection.toUserId;
+      } else {
+        return connection.fromUserId;
+      }
+    });
 
     res.json({
       message: "connections fetched",
