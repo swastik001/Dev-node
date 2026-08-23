@@ -12,6 +12,7 @@ var cookieParser = require("cookie-parser");
 const { authRouter } = require("./routes/auth");
 const { profileRouter } = require("./routes/profile");
 const { requestRouter } = require("./routes/request");
+const { userRouter } = require("./routes/user");
 
 app.use(express.json()); //this is a middleware, it will parse the incoming request body to json, so that we can access it in req.body. This is a built-in middleware in express. Now as we know   app.use will be executed for every incoming request, this is same like app.use((req, res, next) => {})
 app.use(cookieParser()); //this is a middleware, it will parse the incoming request cookies to json, so that we can access it in req.cookies.   app.use will be executed for every incoming request, this is same like app.use((req, res, next) => {})
@@ -187,6 +188,7 @@ app.use(cookieParser()); //this is a middleware, it will parse the incoming requ
 app.use("/", authRouter);
 app.use("/", profileRouter);
 app.use("/", requestRouter);
+app.use("/", userRouter);
 
 connectDB()
   .then(async () => {

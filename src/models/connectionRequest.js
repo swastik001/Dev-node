@@ -5,6 +5,8 @@ const connectionRequestSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId, // this type of id given by mongodb,
     required: true,
     // index: true, //this will make fromuserId indexed and make queries faster
+    ref: "User", //this is used to reference the User model, so that we can populate the fromUserId with the user details when we query the connectionRequest collection, this is called population in mongoose,
+    //wrna agar humne ref nahi diya to fromUserId will be just an ObjectId, and we will have to query the User collection separately to get the user details, but with ref, we can use populate() method to get the user details in one query.
   },
   toUserId: {
     type: mongoose.Schema.Types.ObjectId,
