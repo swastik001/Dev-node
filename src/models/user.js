@@ -18,6 +18,9 @@ const userSchema = new Schema(
       type: String,
       required: true,
       unique: true, //this will make sure that no two users can have the same emailId, if we try to save a user with an emailId that already exists, it will throw an error
+      // when we make unique true, it will create index automaticaly.
+      // wee can also create idex by doing index:true
+
       lowercase: true, //this will make sure that the emailId is always stored in lowercase,
       trim: true, //this will make sure that there are no spaces before or after the emailId,
       validate(value) {
