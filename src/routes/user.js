@@ -70,6 +70,11 @@ userRouter.get("/feed", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
 
+    const pageNumber = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+
+    limit = limit > 50 ? 50 : limit;
+
     const connectionRequests = await ConnectionRequest.find({
       $or: [
         { fromUserId: loggedInUser._id },
@@ -90,7 +95,10 @@ userRouter.get("/feed", userAuth, async (req, res) => {
           _id: { $ne: loggedInUser.id }, //$ne means not equal to
         },
       ],
-    }).select(USER_SAFE_DATA); //select is for selecting only the fields that we want
+    })
+      .select(USER_SAFE_DATA) //select is for selecting only the fields that we want
+      .skip((pageNumber - 1) * limit) //this is to skip homany before given by mongodb
+      .limit(limit); //this is to limit
     res.json({
       message: "Users fetched",
       users: users,
