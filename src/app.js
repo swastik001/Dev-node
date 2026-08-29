@@ -5,7 +5,7 @@ const app = express();
 var cookieParser = require("cookie-parser");
 // const jwt = require("jsonwebtoken");
 // const User = require("./models/user");
-
+const cors = require("cors"); //this for cors error fix, thats it
 // const { userAuth } = require("./middleware/auth");
 // const { validateSignUp } = require("./utils/validation");
 
@@ -13,6 +13,13 @@ const { authRouter } = require("./routes/auth");
 const { profileRouter } = require("./routes/profile");
 const { requestRouter } = require("./routes/request");
 const { userRouter } = require("./routes/user");
+
+app.use(
+  cors({
+    origin: "http://localhost:5173", //whitelisting this domain, so we canseee cookies on browser
+    credentials: true,
+  }),
+);
 
 app.use(express.json()); //this is a middleware, it will parse the incoming request body to json, so that we can access it in req.body. This is a built-in middleware in express. Now as we know   app.use will be executed for every incoming request, this is same like app.use((req, res, next) => {})
 app.use(cookieParser()); //this is a middleware, it will parse the incoming request cookies to json, so that we can access it in req.cookies.   app.use will be executed for every incoming request, this is same like app.use((req, res, next) => {})

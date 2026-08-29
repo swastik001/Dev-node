@@ -95,10 +95,9 @@ userRouter.get("/feed", userAuth, async (req, res) => {
           _id: { $ne: loggedInUser.id }, //$ne means not equal to
         },
       ],
-    })
-      .select(USER_SAFE_DATA) //select is for selecting only the fields that we want
-      .skip((pageNumber - 1) * limit) //this is to skip homany before given by mongodb
-      .limit(limit); //this is to limit
+    }).select(USER_SAFE_DATA); //select is for selecting only the fields that we want
+    // .skip((pageNumber - 1) * limit) //this is to skip homany before given by mongodb
+    // .limit(limit); //this is to limit
     res.json({
       message: "Users fetched",
       users: users,

@@ -6,7 +6,8 @@ const { validateSignUp } = require("../utils/validation");
 const authRouter = express.Router();
 
 authRouter.post("/signup", async (req, res) => {
-  const { firstName, lastName, emailId, password, age, gender } = req?.body;
+  const { firstName, lastName, emailId, password, age, gender, photoUrl } =
+    req?.body;
 
   validateSignUp(req);
 
@@ -18,13 +19,19 @@ authRouter.post("/signup", async (req, res) => {
     password: passwordHash,
     age,
     gender,
+    photoUrl,
   });
   try {
-    await user.save();
+    const savedUser = await user.save();
+    const jwtToken = await savedUser.getJWT();
+
+    res.cookie("token", jwtToken, {
+      expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 day
+    });
+    res.json({ message: "User signed up successfully", data: savedUser });
   } catch (e) {
     res.status(400).send("Sign Up Failed", +e.message);
   }
-  res.send("User signed up successfully");
 });
 authRouter.post("/login", async (req, res) => {
   try {
@@ -43,12 +50,12 @@ authRouter.post("/login", async (req, res) => {
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 day
       });
 
-      res.send("Login Successful");
+      res.send({ message: "Login Successful", user: user });
     } else {
       throw new Error("Invalid Credentials");
     }
   } catch (e) {
-    res.send(" Login Failed - " + e.message);
+    res.status(400).json({ message: e.message });
   }
 });
 
